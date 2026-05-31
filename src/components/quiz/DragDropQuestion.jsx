@@ -116,7 +116,7 @@ export default function DragDropQuestion({ question, onAnswer, currentAnswer }) 
         {/* Options (Draggable) */}
         <div className="space-y-3">
           <h3 className="text-purple-400 font-semibold mb-3 text-sm uppercase tracking-wide">
-            Funções da Linguagem
+            Opções disponíveis
           </h3>
           <div className="space-y-2">
             {availableOptions.map((option, idx) => (

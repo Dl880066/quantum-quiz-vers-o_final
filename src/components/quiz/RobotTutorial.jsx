@@ -15,19 +15,19 @@ export default function RobotTutorial({ onComplete }) {
     {
       icon: Clock,
       title: "Como Funciona",
-      message: "Você responderá 10 questões sobre Funções da Linguagem. Cada questão tem peso na nota final de 0 a 3 pontos.",
+      message: "Você responderá às questões da avaliação. Leia cada enunciado com atenção e selecione sua resposta.",
       color: "purple"
     },
     {
       icon: Shield,
       title: "⚠️ Regra Importante: Anti-Cheat",
-      message: "NÃO troque de aba durante o quiz! Cada tentativa será registrada. Após 3 tentativas, o sistema bloqueia automaticamente.",
+      message: "NÃO troque de aba durante a avaliação! Cada ocorrência é registrada e, ao atingir o limite definido pelo professor, a avaliação pode ser bloqueada automaticamente.",
       color: "pink"
     },
     {
       icon: AlertTriangle,
       title: "Atenção Especial",
-      message: "Você NÃO verá se acertou ou errou durante o quiz. Apenas siga em frente com confiança! 💪",
+      message: "Você NÃO verá se acertou ou errou durante a avaliação. Apenas siga em frente com confiança! 💪",
       color: "cyan"
     },
     {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QuizAttempt, Quiz, Question, Config } from '@/api/entities';
+import { QuizAttempt, Quiz, Question, Config, SecurityLog } from '@/api/entities';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import RobotTutorial from '../components/quiz/RobotTutorial';
@@ -8,33 +8,8 @@ import StudentInfoForm from '../components/quiz/StudentInfoForm';
 import MultipleChoiceQuestion from '../components/quiz/MultipleChoiceQuestion';
 import DragDropQuestion from '../components/quiz/DragDropQuestion';
 import TrueFalseQuestion from '../components/quiz/TrueFalseQuestion';
-
-// ---------- Quiz padrão embutido (PIBID) ----------
-const DEFAULT_QUIZ = {
-  id: 'default',
-  title: 'Funções da Linguagem - PIBID',
-  randomize: true,
-  questions_to_show: 10,
-  time_per_question: false,
-  time_limit: null,
-};
-
-const DEFAULT_QUESTIONS = [
-  { id:'q1',type:'multiple_choice',order:0,presentation_text:'1) (Unifesp-2002)<br><br><strong>Texto II:</strong><br><em>Tu choraste em presença da morte?<br>Na presença de estranhos choraste?<br>Não descende o cobarde do forte;<br>Pois choraste, meu filho não és!</em><br>(Gonçalves Dias)<br><br><strong>Texto V:</strong><br><em>Meu Deus! Meu Deus! Mas que bandeira é esta...<br>Silêncio! ...Musa! Chora, chora tanto<br>Que o pavilhão se lave no teu pranto...</em><br>(Castro Alves)',question:'Dois dos cinco textos expressam sentimentos de incontida revolta. Esses dois textos são:',options:['I e V','II e III','II e V','III e V','IV e V'],correct_answer:'II e V' },
-  { id:'q2',type:'multiple_choice',order:1,presentation_text:'2) (Enem-2014)<br><em>O telefone tocou. — Alô? Quem fala? — Como? Com quem deseja falar?...</em>',question:'Pela insistência em manter o contato entre emissor e receptor, predomina no texto a função:',options:['metalinguística','fática','referencial','emotiva','conativa'],correct_answer:'fática' },
-  { id:'q3',type:'multiple_choice',order:2,presentation_text:'3) (Enem-2010)<br><em>A biosfera, que reúne todos os ambientes onde se desenvolvem os seres vivos, se divide em unidades menores chamadas ecossistemas...</em>',question:'Predomina no texto a função da linguagem:',options:['emotiva, porque o autor expressa seu sentimento','fática, porque o texto testa o canal','poética, porque chama atenção para a linguagem','conativa, porque procura orientar comportamentos','referencial, porque trata de noções conceituais'],correct_answer:'referencial, porque trata de noções conceituais' },
-  { id:'q4',type:'drag_drop',order:3,presentation_text:'4) Relacione os textos com a função da linguagem (Parte 1):',question:'Associe cada texto à sua função:',alternatives:['a) O vento varria as folhas... (Manuel Bandeira)','b) — Alô! — Bom dia! — Quero falar com o João...','c) Eu fico pensando em nós dois... (Rita Lee)'],options:['Poética','Fática','Emotiva'],correct_answer:['Poética','Fática','Emotiva'] },
-  { id:'q5',type:'drag_drop',order:4,presentation_text:'5) Relacione os textos com a função da linguagem (Parte 2):',question:'Associe cada texto à sua função:',alternatives:['d) Não deixe para depois. Compre já seu carro novo!','e) "A maior parte dos ministros do STF rejeita..." (Revista Veja)','f) O sujeito das orações pode ser classificado em simples ou composto.'],options:['Conativa','Referencial','Metalinguística'],correct_answer:['Conativa','Referencial','Metalinguística'] },
-  { id:'q6',type:'multiple_choice',order:5,presentation_text:'6) <em>"Mesmo quando tudo parece desabar, cabe a mim decidir entre rir ou chorar..."</em> — Cora Coralina',question:'A função emotiva da linguagem pode ser identificada porque:',options:['há objetividade da informação transmitida.','há emprego de formas verbais no pretérito.','evidencia o código reproduzido por ele próprio.','mensagem centrada no emissor, com seus anseios e percepções.','presença de marcas de interlocução.'],correct_answer:'mensagem centrada no emissor, com seus anseios e percepções.' },
-  { id:'q7',type:'multiple_choice',order:6,presentation_text:'7) Carlos Drummond de Andrade — <em>Diálogo de todo dia</em>: <em>— Alô, quem fala? — Ninguém. Quem fala é você...</em>',question:'A confusão na crônica é desencadeada por um trecho em que predomina a função:',options:['conativa, pois o emissor se direciona ao receptor.','poética, por construir narrativa humorística.','fática, pois a pergunta abre o canal de comunicação.','fática, por marcas de oralidade como "engraçadinho".','emotiva, por linguagem figurativa.'],correct_answer:'fática, pois a pergunta abre o canal de comunicação.' },
-  { id:'q8',type:'multiple_choice',order:7,presentation_text:'8) (Enem 2015) <em>Perder a tramontana — É perder o norte, desorientar-se...</em>',question:'Utilizando a função referencial, o autor busca:',options:['apresentar seus indícios subjetivos.','convencer o leitor a utilizá-la.','expor dados reais de seu emprego.','explorar sua dimensão estética.','criticar sua origem conceitual.'],correct_answer:'expor dados reais de seu emprego.' },
-  { id:'q9',type:'multiple_choice',order:8,presentation_text:'9) <em>Ou isto ou aquilo — Ou se tem chuva e não se tem sol, / ou se tem sol e não se tem chuva!</em> (Cecília Meireles)',question:'A função da linguagem predominante no poema é:',options:['Referencial','Emotiva','Poética','Conativa','Fática'],correct_answer:'Poética' },
-  { id:'q10',type:'multiple_choice',order:9,presentation_text:'10) <em>"Venha para a nossa instituição e torne-se um dos maiores pensadores do país!"</em>',question:'A função conativa pode ser identificada porque:',options:['transmite informações objetivas.','há preocupação estética com a forma.','centra-se no receptor, com verbos no imperativo.','o emissor expressa sentimentos pessoais.','há explicação sobre o código linguístico.'],correct_answer:'centra-se no receptor, com verbos no imperativo.' },
-  { id:'q11',type:'multiple_choice',order:10,presentation_text:'11) <em>A mão que escreve este poema / não sabe o que está escrevendo...</em> (Drummond)',question:'A função da linguagem quando o código é o próprio assunto é:',options:['Emotiva','Referencial','Poética','Metalinguística','Fática'],correct_answer:'Metalinguística' },
-  { id:'q12',type:'multiple_choice',order:11,presentation_text:'12) A função fática centra-se no contato, com expressões como "veja bem", "entende?", "você está me ouvindo?".',question:'Qual das alternativas exemplifica a função fática?',options:['"A água ferve a 100°C ao nível do mar."','"Que saudade que eu sinto da minha terra!"','"Alô? Alô, você está me ouvindo?"','"Compre agora e ganhe um brinde exclusivo!"','"Poesia é quando a palavra vira verso."'],correct_answer:'"Alô? Alô, você está me ouvindo?"' },
-  { id:'q13',type:'true_false',order:12,presentation_text:'13) Segundo Jakobson, para a comunicação são necessários: remetente, mensagem, destinatário, contexto, código e canal.',question:'A função referencial centra-se no contexto e transmite a mensagem objetivamente, sendo predominante em notícias e artigos científicos.',options:['Verdadeiro','Falso'],correct_answer:'Verdadeiro' },
-  { id:'q14',type:'true_false',order:13,presentation_text:'14) A função metalinguística ocorre quando o código é o centro do enunciado (metalinguagem).',question:'A função metalinguística está presente somente em dicionários e gramáticas, não podendo aparecer em poemas.',options:['Verdadeiro','Falso'],correct_answer:'Falso' },
-];
+import FillBlankQuestion from '../components/quiz/FillBlankQuestion';
+import OrderingQuestion from '../components/quiz/OrderingQuestion';
 
 const shuffleArray = (arr) => {
   const s = [...arr];
@@ -43,6 +18,21 @@ const shuffleArray = (arr) => {
     [s[i], s[j]] = [s[j], s[i]];
   }
   return s;
+};
+
+// Salva progresso no localStorage de forma segura
+const saveProgress = (data) => {
+  try { localStorage.setItem('qz_progress', JSON.stringify(data)); } catch {}
+};
+const clearProgress = () => { try { localStorage.removeItem('qz_progress'); } catch {} };
+const loadProgress = () => {
+  try {
+    const raw = localStorage.getItem('qz_progress');
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p?.studentInfo && p?.answers && Object.keys(p.answers).length > 0) return p;
+  } catch {}
+  return null;
 };
 
 export default function QuizAluno() {
@@ -58,69 +48,111 @@ export default function QuizAluno() {
   const [startTime, setStartTime] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const hasSetupAntiCheat = useRef(false);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [showTransition, setShowTransition] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const timerRef = useRef(null);
+  const [fullscreenMsg, setFullscreenMsg] = useState(false);
+  const [recoveryData, setRecoveryData] = useState(null);
+  const [attemptsLeft, setAttemptsLeft] = useState(null);
+  const attemptIdRef = useRef(null); // ID da tentativa em andamento (para log de segurança)
+  // Refs para leitura sempre atualizada em timers e listeners
+  const answersRef = useRef(answers);
+  const currentQuestionRef = useRef(currentQuestion);
+  const studentInfoRef = useRef(studentInfo);
+  const hasSubmittedRef = useRef(false);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
+  useEffect(() => { studentInfoRef.current = studentInfo; }, [studentInfo]);
 
-  useEffect(() => { loadQuiz(); }, [quizIdParam]);
+  useEffect(() => {
+    loadQuiz();
+  }, [quizIdParam]);
 
   const loadQuiz = async () => {
-    // Prioridade: 1) param da URL, 2) quiz principal definido pelo professor, 3) PIBID padrão
     const targetId = quizIdParam || Config.get('main_quiz_id');
-
     if (targetId) {
       const quiz = await Quiz.get(targetId);
       if (quiz && quiz.active) {
         const qs = await Question.listByQuiz(targetId);
         setQuizMeta({ ...quiz, questionsData: qs });
+        // Recuperação: só oferece se o progresso for desta mesma avaliação
+        const saved = loadProgress();
+        if (saved && saved.quizId === quiz.id) setRecoveryData(saved);
+        else if (saved && saved.quizId !== quiz.id) clearProgress();
         setStep('info');
         return;
       }
     }
-    setQuizMeta({ ...DEFAULT_QUIZ, questionsData: DEFAULT_QUESTIONS });
-    setStep('info');
+    // Sem quiz configurado: tela de aviso genérica
+    setQuizMeta(null);
+    setStep('no_quiz');
   };
 
-  // Timer logic
+  // Timer
   useEffect(() => {
     if (step !== 'quiz' || !quizMeta?.time_limit) return;
-    if (quizMeta.time_per_question) {
-      setTimeLeft(quizMeta.time_limit);
-    } else {
-      setTimeLeft(quizMeta.time_limit * 60);
-    }
+    setTimeLeft(quizMeta.time_per_question ? quizMeta.time_limit : quizMeta.time_limit * 60);
   }, [step, currentQuestion, quizMeta]);
 
   useEffect(() => {
     if (timeLeft === null || step !== 'quiz') return;
     if (timeLeft <= 0) {
-      if (quizMeta?.time_per_question) {
-        handleAnswer(null);
-      } else {
-        submitQuiz(answers, true);
-      }
+      if (quizMeta?.time_per_question) handleAnswer(null);
+      else submitQuiz(answersRef.current, true);
       return;
     }
     timerRef.current = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(timerRef.current);
   }, [timeLeft, step]);
 
-  // Anti-Cheat
+  // Anti-cheat
   useEffect(() => {
-    if (step !== 'quiz' || hasSetupAntiCheat.current) return;
-    const handle = () => {
-      if (document.hidden) setTabSwitches(prev => {
+    if (step !== 'quiz') return;
+    const maxWarnings = quizMeta?.max_tab_warnings ?? 3;
+    const action = quizMeta?.security_action ?? 'block';
+
+    const handle = async () => {
+      if (!document.hidden) return;
+      await SecurityLog.add({
+        quiz_id: quizMeta?.id,
+        attempt_id: attemptIdRef.current,
+        student_email: studentInfoRef.current?.email,
+        student_name: studentInfoRef.current?.name,
+        event: 'tab_switch',
+        question_index: currentQuestionRef.current,
+      });
+
+      setTabSwitches(prev => {
         const n = prev + 1;
-        if (n >= 3) setStep('blocked');
+        if (n >= maxWarnings) {
+          if (action === 'block') setStep('blocked');
+          else if (action === 'finish') submitQuiz(answersRef.current);
+        }
         return n;
       });
     };
+
+    const handleFs = async () => {
+      if (!document.fullscreenElement && quizMeta?.monitor_fullscreen) {
+        await SecurityLog.add({
+          quiz_id: quizMeta?.id,
+          attempt_id: attemptIdRef.current,
+          student_email: studentInfoRef.current?.email,
+          student_name: studentInfoRef.current?.name,
+          event: 'fullscreen_exit',
+          question_index: currentQuestionRef.current,
+        });
+      }
+    };
+
     document.addEventListener('visibilitychange', handle);
-    hasSetupAntiCheat.current = true;
-    return () => document.removeEventListener('visibilitychange', handle);
-  }, [step]);
+    document.addEventListener('fullscreenchange', handleFs);
+    return () => {
+      document.removeEventListener('visibilitychange', handle);
+      document.removeEventListener('fullscreenchange', handleFs);
+    };
+  }, [step, quizMeta]);
 
   useEffect(() => {
     const prevent = () => window.history.pushState(null, '', window.location.href);
@@ -133,18 +165,32 @@ export default function QuizAluno() {
     setIsCheckingEmail(true);
     try {
       const existing = await QuizAttempt.filter({ student_email: info.email, quiz_id: quizMeta.id });
-      if (existing.length > 0) {
-        alert('❌ Este e-mail já realizou esta avaliação.');
+      const maxAtt = quizMeta?.max_attempts ?? 1;
+      // 0 = ilimitado
+      if (maxAtt !== 0 && existing.length >= maxAtt) {
         setIsCheckingEmail(false);
+        setStudentInfo(info);
+        setAttemptsLeft(0);
         return;
       }
+      setAttemptsLeft(maxAtt === 0 ? null : maxAtt - existing.length - 1);
     } catch (e) { console.error(e); }
     setStudentInfo(info);
     setStep('tutorial');
     setIsCheckingEmail(false);
   };
 
+  const enterFullscreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        setFullscreenMsg(false);
+      } else setFullscreenMsg(true);
+    } catch { setFullscreenMsg(true); }
+  };
+
   const handleTutorialComplete = () => {
+    enterFullscreen();
     setStartTime(new Date());
     const qs = quizMeta.questionsData || [];
     const toShow = quizMeta.questions_to_show ? Number(quizMeta.questions_to_show) : qs.length;
@@ -159,6 +205,15 @@ export default function QuizAluno() {
     setAnswers(updatedAnswers);
     clearTimeout(timerRef.current);
 
+    saveProgress({
+      quizId: quizMeta?.id,
+      studentInfo,
+      answers: updatedAnswers,
+      currentQuestion: currentQuestion + 1,
+      startTime: startTime?.toISOString(),
+      questionOrder: shuffledQuestions.map(q => q.id),
+    });
+
     if (currentQuestion < shuffledQuestions.length - 1) {
       setShowTransition(true);
     } else {
@@ -171,35 +226,52 @@ export default function QuizAluno() {
     setCurrentQuestion(c => c + 1);
   };
 
+  const normalize = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  const arraysEqual = (a, b) =>
+    Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i]);
+
   const calculateScore = (finalAnswers) => {
     let correct = 0;
     shuffledQuestions.forEach(q => {
       const ua = finalAnswers[q.id];
       if (q.type === 'drag_drop') {
-        if (Array.isArray(q.correct_answer) && Array.isArray(ua)) {
-          if (ua.every((v, i) => v === q.correct_answer[i])) correct++;
+        // ua é um objeto { textoAlternativa: opçãoEscolhida }
+        // q.correct_answer é um array alinhado a q.alternatives
+        if (ua && typeof ua === 'object' && Array.isArray(q.correct_answer) && Array.isArray(q.alternatives)) {
+          const allRight = q.alternatives.every((alt, i) => ua[alt] === q.correct_answer[i]);
+          if (allRight && Object.keys(ua).length === q.alternatives.length) correct++;
         }
+      } else if (q.type === 'ordering') {
+        if (arraysEqual(ua, q.options)) correct++;
+      } else if (q.type === 'fill_blank') {
+        if (ua && normalize(ua) === normalize(q.correct_answer)) correct++;
       } else {
         if (ua === q.correct_answer) correct++;
       }
     });
-    const perQ = 3.0 / shuffledQuestions.length;
+    const perQ = shuffledQuestions.length > 0 ? 10.0 / shuffledQuestions.length : 0;
     return Math.round(correct * perQ * 100) / 100;
   };
 
   const submitQuiz = async (finalAnswers, timedOut = false) => {
+    if (hasSubmittedRef.current) return; // evita dupla submissão
+    hasSubmittedRef.current = true;
     setIsSubmitting(true);
     const endTime = new Date();
     const duration = ((endTime - (startTime || endTime)) / 1000 / 60);
     const score = calculateScore(finalAnswers);
 
     try {
-      await QuizAttempt.create({
+      // Número desta tentativa = nº de tentativas anteriores + 1
+      const previousCount = await QuizAttempt.countByStudent(quizMeta.id, studentInfo.email);
+      const attempt = await QuizAttempt.create({
         quiz_id: quizMeta.id,
         quiz_title: quizMeta.title,
         student_name: studentInfo.name,
         student_email: studentInfo.email,
         score,
+        max_score: 10,
         answers: finalAnswers,
         start_time: (startTime || endTime).toISOString(),
         end_time: endTime.toISOString(),
@@ -207,30 +279,92 @@ export default function QuizAluno() {
         tab_switches: tabSwitches,
         blocked: false,
         timed_out: timedOut,
+        attempt_number: previousCount + 1,
       });
-    } catch (e) { console.error(e); }
+      attemptIdRef.current = attempt.id;
+    } catch (e) { console.error('Erro ao salvar tentativa:', e); hasSubmittedRef.current = false; }
 
+    clearProgress();
     setStep('completed');
     setIsSubmitting(false);
   };
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
 
-  if (step === 'loading') return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+  // ── Sem quiz disponível ──
+  if (step === 'no_quiz') return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white/5 border border-white/10 rounded-3xl p-8 text-center">
+        <div className="text-4xl mb-4">📋</div>
+        <h3 className="text-xl font-bold text-white/60 mb-3">Nenhuma avaliação disponível</h3>
+        <p className="text-white/40 text-sm">Aguarde seu professor disponibilizar uma avaliação.</p>
+      </div>
     </div>
   );
-  if (step === 'info') return <StudentInfoForm onSubmit={handleInfoSubmit} isChecking={isCheckingEmail} quizTitle={quizMeta?.title} />;
+
+  // ── Recuperação de progresso ──
+  if (recoveryData && step === 'info') return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-400/50 rounded-3xl p-8 text-center">
+        <div className="text-4xl mb-4">🔄</div>
+        <h3 className="text-xl font-bold text-yellow-400 mb-3">Progresso Encontrado</h3>
+        <p className="text-white/70 text-sm mb-2">Avaliação incompleta de <strong className="text-white">{recoveryData.studentInfo?.name}</strong>.</p>
+        <p className="text-white/50 text-xs mb-6">{Object.keys(recoveryData.answers || {}).length} questão(ões) respondida(s)</p>
+        <button
+          onClick={() => {
+            setStudentInfo(recoveryData.studentInfo);
+            setAnswers(recoveryData.answers || {});
+            setCurrentQuestion(recoveryData.currentQuestion || 0);
+            setStartTime(recoveryData.startTime ? new Date(recoveryData.startTime) : new Date());
+            setRecoveryData(null);
+            const qs = quizMeta?.questionsData || [];
+            // Restaura a mesma ordem de questões da sessão original (se persistida)
+            let session;
+            if (Array.isArray(recoveryData.questionOrder) && recoveryData.questionOrder.length) {
+              session = recoveryData.questionOrder
+                .map(id => qs.find(q => q.id === id))
+                .filter(Boolean);
+            } else {
+              const toShow = quizMeta?.questions_to_show ? Number(quizMeta.questions_to_show) : qs.length;
+              session = qs.slice(0, toShow);
+            }
+            setShuffledQuestions(session);
+            setStep('quiz');
+          }}
+          className="w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-xl mb-3">
+          Continuar de onde parei
+        </button>
+        <button onClick={() => { clearProgress(); setRecoveryData(null); }} className="w-full py-2 text-white/40 hover:text-white/60 text-sm">
+          Iniciar do zero
+        </button>
+      </div>
+    </div>
+  );
+
+  if (step === 'loading') return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-cyan-400 animate-spin" /></div>;
+
+  if (step === 'info') {
+    const maxAtt = quizMeta?.max_attempts ?? 1;
+    return (
+      <StudentInfoForm
+        onSubmit={handleInfoSubmit}
+        isChecking={isCheckingEmail}
+        quizTitle={quizMeta?.title}
+        attemptsLeft={attemptsLeft}
+        maxAttempts={maxAtt === 0 ? null : maxAtt}
+      />
+    );
+  }
+
   if (step === 'tutorial') return <RobotTutorial onComplete={handleTutorialComplete} hasTimer={!!quizMeta?.time_limit} />;
 
   if (step === 'blocked') return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-400 rounded-3xl p-8 text-center">
         <AlertTriangle className="w-20 h-20 text-red-400 mx-auto mb-6 animate-pulse" />
-        <h2 className="text-3xl font-bold text-red-400 mb-4">Quiz Bloqueado</h2>
-        <p className="text-white/90 mb-4">Você tentou trocar de aba 3 vezes.</p>
-        <p className="text-white/60 text-sm">Entre em contato com seu professor.</p>
+        <h2 className="text-3xl font-bold text-red-400 mb-4">Avaliação Bloqueada</h2>
+        <p className="text-white/90 mb-2">Você atingiu o limite de {quizMeta?.max_tab_warnings ?? 3} saída(s) de foco detectada(s).</p>
+        <p className="text-white/60 text-sm mt-4">Entre em contato com seu professor.</p>
       </div>
     </div>
   );
@@ -239,33 +373,59 @@ export default function QuizAluno() {
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-gradient-to-br from-green-500/20 to-cyan-500/20 border border-green-400 rounded-3xl p-8 text-center">
         <CheckCircle2 className="w-20 h-20 text-green-400 mx-auto mb-6 animate-pulse" />
-        <h2 className="text-3xl font-bold text-green-400 mb-4">Quiz Concluído!</h2>
-        <p className="text-white/90 mb-2">Parabéns, {studentInfo.name}!</p>
-        <p className="text-cyan-300 text-sm">Sua avaliação foi salva com sucesso.</p>
+        <h2 className="text-3xl font-bold text-green-400 mb-4">Avaliação Concluída!</h2>
+        <p className="text-white/90 mb-2">Parabéns, {studentInfo?.name?.split(' ')[0]}!</p>
+        <p className="text-cyan-300 text-sm">Suas respostas foram salvas com sucesso.</p>
       </div>
     </div>
   );
 
   const question = shuffledQuestions[currentQuestion];
   const progress = ((currentQuestion + 1) / shuffledQuestions.length) * 100;
+  // Índice fora de faixa na recuperação: todas já respondidas → finalizar
+  if (step === 'quiz' && shuffledQuestions.length > 0 && currentQuestion >= shuffledQuestions.length && !isSubmitting) {
+    submitQuiz(answers);
+    return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="w-8 h-8 text-cyan-400 animate-spin" /></div>;
+  }
   if (!question) return null;
+  const maxWarnings = quizMeta?.max_tab_warnings ?? 3;
+  const action = quizMeta?.security_action ?? 'block';
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
-      {showTransition && (
-        <RobotTransition questionNumber={currentQuestion + 2} totalQuestions={shuffledQuestions.length} onComplete={handleTransitionComplete} />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/20 to-black" />
 
-      {tabSwitches > 0 && tabSwitches < 3 && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 border border-red-400 rounded-xl px-6 py-3 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-white" />
-            <p className="text-white font-bold">Aviso: Não troque de aba! ({tabSwitches}/3)</p>
+      {/* Modal Tela Cheia */}
+      {fullscreenMsg && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-6">
+          <div className="max-w-sm w-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-400/50 rounded-3xl p-8 text-center shadow-[0_0_40px_rgba(0,212,255,0.3)]">
+            <div className="text-4xl mb-4">🖥️</div>
+            <h3 className="text-xl font-bold text-cyan-400 mb-3">Tela Cheia Recomendada</h3>
+            <p className="text-white/70 text-sm mb-6">Para maior segurança durante a avaliação, ative o modo tela cheia antes de continuar.</p>
+            <button onClick={async () => { try { await document.documentElement.requestFullscreen(); } catch {} setFullscreenMsg(false); }}
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-bold rounded-xl mb-3">
+              Ativar Tela Cheia
+            </button>
+            <button onClick={() => setFullscreenMsg(false)} className="w-full py-2 text-white/40 hover:text-white/60 text-sm">
+              Continuar sem tela cheia
+            </button>
           </div>
         </div>
       )}
 
+      {showTransition && <RobotTransition questionNumber={currentQuestion + 2} totalQuestions={shuffledQuestions.length} onComplete={handleTransitionComplete} />}
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/20 to-black" />
+
+      {/* Aviso de troca de aba */}
+      {tabSwitches > 0 && tabSwitches < maxWarnings && (action === 'warn' || action === 'block' || action === 'finish') && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 border border-red-400 rounded-xl px-6 py-3 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-white" />
+            <p className="text-white font-bold">Atenção: saída de foco detectada! ({tabSwitches}/{maxWarnings})</p>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="relative z-10 border-b border-cyan-400/30 bg-black/50 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
@@ -279,7 +439,7 @@ export default function QuizAluno() {
                   {formatTime(timeLeft)}
                 </span>
               )}
-              <span className="text-purple-300 text-sm">{studentInfo.name.split(' ')[0]}</span>
+              <span className="text-purple-300 text-sm">{studentInfo?.name?.split(' ')[0]}</span>
             </div>
           </div>
           <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -288,6 +448,7 @@ export default function QuizAluno() {
         </div>
       </div>
 
+      {/* Questão */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <div className="bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-400/30 rounded-3xl p-6 md:p-8 backdrop-blur-xl">
           {isSubmitting ? (
@@ -298,8 +459,10 @@ export default function QuizAluno() {
           ) : (
             <>
               {question.type === 'multiple_choice' && <MultipleChoiceQuestion key={question.id} question={question} onAnswer={handleAnswer} />}
-              {question.type === 'drag_drop' && <DragDropQuestion key={question.id} question={question} onAnswer={handleAnswer} />}
-              {question.type === 'true_false' && <TrueFalseQuestion key={question.id} question={question} onAnswer={handleAnswer} />}
+              {question.type === 'drag_drop'       && <DragDropQuestion       key={question.id} question={question} onAnswer={handleAnswer} />}
+              {question.type === 'true_false'      && <TrueFalseQuestion      key={question.id} question={question} onAnswer={handleAnswer} />}
+              {question.type === 'fill_blank'      && <FillBlankQuestion      key={question.id} question={question} onAnswer={handleAnswer} />}
+              {question.type === 'ordering'        && <OrderingQuestion       key={question.id} question={question} onAnswer={handleAnswer} />}
             </>
           )}
         </div>

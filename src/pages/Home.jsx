@@ -9,9 +9,7 @@ export default function Home() {
 
   useEffect(() => {
     const id = Config.get('main_quiz_id');
-    if (id) {
-      Quiz.get(id).then(q => setMainQuizTitle(q?.title || null));
-    }
+    if (id) Quiz.get(id).then(q => setMainQuizTitle(q?.title || null));
   }, []);
 
   return (
@@ -25,16 +23,15 @@ export default function Home() {
       <div className="relative z-10 max-w-2xl w-full text-center">
         <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-400/30 rounded-full px-4 py-2 mb-6">
           <Sparkles className="w-4 h-4 text-purple-400" />
-          <span className="text-purple-300 text-sm font-medium">PIBID 2026</span>
+          <span className="text-purple-300 text-sm font-medium">Sistema de Avaliação</span>
         </div>
 
         <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
           Quantum Quiz
         </h1>
-        <p className="text-white/50 text-lg mb-12">Sistema de Avaliação Interativa</p>
+        <p className="text-white/50 text-lg mb-12">Plataforma de Avaliação Interativa</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {/* Aluno */}
           <button
             onClick={() => navigate('/QuizAluno')}
             className="group bg-gradient-to-br from-cyan-500/10 to-cyan-600/10 border border-cyan-400/30 rounded-2xl p-6 text-left hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(0,212,255,0.2)] transition-all"
@@ -46,11 +43,10 @@ export default function Home() {
             <p className="text-white/40 text-sm">
               {mainQuizTitle
                 ? <span className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />{mainQuizTitle}</span>
-                : 'Acessar o quiz de Funções da Linguagem'}
+                : 'Acessar a avaliação disponível'}
             </p>
           </button>
 
-          {/* Professor - Dashboard */}
           <button
             onClick={() => navigate('/QuizProfessor')}
             className="group bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-400/30 rounded-2xl p-6 text-left hover:border-purple-400/60 hover:shadow-[0_0_30px_rgba(176,38,255,0.2)] transition-all"
@@ -59,11 +55,10 @@ export default function Home() {
               <BarChart2 className="w-6 h-6 text-purple-400" />
             </div>
             <h2 className="text-xl font-bold text-purple-400 mb-1">Dashboard</h2>
-            <p className="text-white/40 text-sm">Ver resultados e relatórios da turma</p>
+            <p className="text-white/40 text-sm">Ver resultados e relatórios</p>
           </button>
         </div>
 
-        {/* Gerenciar Quizzes — destaque */}
         <button
           onClick={() => navigate('/GerenciarQuiz')}
           className="group w-full bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 border border-white/10 rounded-2xl p-5 text-left hover:border-purple-400/40 hover:shadow-[0_0_30px_rgba(176,38,255,0.15)] transition-all flex items-center gap-4"
@@ -72,10 +67,8 @@ export default function Home() {
             <Plus className="w-6 h-6 text-pink-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-pink-400 mb-0.5 flex items-center gap-2">
-              Criar & Gerenciar Quizzes
-            </h2>
-            <p className="text-white/40 text-sm">Crie questões, defina tempo e gerencie seus quizzes</p>
+            <h2 className="text-lg font-bold text-pink-400 mb-0.5">Criar & Gerenciar Avaliações</h2>
+            <p className="text-white/40 text-sm">Crie questões, configure tentativas e gerencie avaliações</p>
           </div>
         </button>
       </div>
